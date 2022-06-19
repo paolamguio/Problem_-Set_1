@@ -43,13 +43,16 @@ view(data)
 # Renombre primera columna en dataframe
 colnames(data)[1] <- "id"
 
-data <- as_tibble(data)
+# Se convierte el dataframe a tibble, siendo este último una versión mejorada de dataframe
 
+data <- as_tibble(data) 
+
+# Fin de proceso, se guarda la base de datos que se utilizará durante el desarrollo de la primera parte
 saveRDS(data, file = "data.rds")
 
 
 ## Descripción data ---------------------------------------------------------------
-
+#url
 urldata <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
 
 tabla_des <- urldata %>% read_html() %>% html_table()

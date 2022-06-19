@@ -14,51 +14,41 @@ require(pacman)
 
 p_load(
   tidyverse,
-  rvest
+  rvest,
+  writexl
 )
 
-require(styler) #librería de estilo
-require(lintr)  #librería de estilo
-library(dplyr)
 library(datasets)
 library(data.table)
 
 
-
-## scrape de datos como tabla desde sitio el web -------------------------------------------------------------
+## scrape de datos como tabla desde sitio web -------------------------------------------------------------
 # url
 url <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_"
 
-# Almacenamiento de datos en tablas
-# Los datos ocntienen ifnormación de la GEIH 2018 para Bogotá
-tablas <- list()
+# Almacenamiento de datos en dataframe
+# Los datos contienen información de la GEIH 2018 para Bogotá
+data <- data.frame()
 for (i in 1:10) {
   url_i <- paste0(url, i, ".html")
-  tablas[[i]] <- url_i %>%
+  tablas <- url_i %>%
     read_html() %>%
-    html_table()
+    html_table() %>% .[[1]]
+  data <- rbind.data.frame(data, tablas)
 }
 
-# Revisión de tablas
-tablas[[1]]
-tablas[[5]]
+# Revisión de data
+view(data)
 
-# Renombre / eliminar primera columna en tablas, necesario para apila las bases de datos de una lista en un solo dataframe
-
-tablas[[1]] $variable_a_eliminar <- NULL # Eliminar variable
-tablas[[1]]
-
-dataframe1 <- tablas[[1]]
-dataframe1$nombrecolumna <- NULL 
-dataframe1
-nuevodataframe <- dataframe1 [,-1]  
+# Renombre primera columna en dataframe
+colnames(data)[1] <- "id"
 
 
-colnames(tablas, 1, NULL)
+## Descripción data ---------------------------------------------------------------
 
+urldata <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
 
+tabla_des <- urldata %>% read_html() %>% html_table()
+view(tabla_des)
+write_xlsx(tabla_des, "tabla_descripcion.xlsx")
 
-for (i in 1:10) {
-  # Revisión de tablas
-  tablas[[2]]
-}

@@ -43,6 +43,10 @@ view(data)
 # Renombre primera columna en dataframe
 colnames(data)[1] <- "id"
 
+data <- as_tibble(data)
+
+saveRDS(data, file = "data.rds")
+
 
 ## Descripción data ---------------------------------------------------------------
 

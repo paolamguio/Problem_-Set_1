@@ -13,7 +13,6 @@ p_load(tidyverse,
        rvest)
 # scrape de datos como tabla desde sitio el web:
 url <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_"
-
 # Almacenamiento de los datos en tablas
 
 tablas = list()

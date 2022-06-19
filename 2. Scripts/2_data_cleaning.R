@@ -1,5 +1,17 @@
+########################################
+# Data cleaning
+# Problem_Set_1 
+# Grupo XX
+########################################
+
+
+
+## Preparación del espacio y librerías ---------------------------------------------------
 rm(list = ls())
 
+setwd("C:/Users/amorales/OneDrive - ANI/Documentos/GitHub/Problem_-Set_1/3. Stores")
+
+# Llamado librerías
 require(pacman)
 
 p_load(
@@ -10,12 +22,15 @@ p_load(
   skimr
 )
 
+# Se importa base de datos obtenida del scraping
 df <- import("data.rds")
 
+# Revisión preliminar de df
 head(df)
 
 skim(df) %>% head()
 
+# estadísticas descriptivas de las variables
 summary(df)
 
 table(df$dominio)

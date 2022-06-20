@@ -34,3 +34,11 @@ skim(df) %>% head()
 summary(df)
 
 table(df$dominio)
+
+table(df$dsi)
+
+table(df$ocu)
+
+summary(df$ingtot)
+
+df <- df %>% subset(age > 18 & ocu == 1)

@@ -19,7 +19,8 @@ p_load(
   rvest,
   writexl,
   rio,
-  skimr
+  skimr,
+  pastecs
 )
 
 
@@ -43,6 +44,11 @@ table(df$dsi) #la variable dsi indica en cero las personas empleadas
 
 table(df$ocu) #la variable ocu indica en uno las personas ocupadas
 
+df %>% subset(dsi == 0) %>% select(ingtot) %>% summary()
+df %>% subset(dsi == 1) %>% select(ingtot) %>% summary()
+df %>% subset(ocu == 0) %>% select(ingtot) %>% summary()
+df %>% subset(ocu == 1) %>% select(ingtot) %>% summary()
+
 table(df$clase) #todos los individuos estan en la zona urbana
 
 table(df$formal) #9676 personas hacen parte del sistema de seguridad social, trabajo formal
@@ -56,3 +62,28 @@ summary(df$y_total_m) # Andres, esta es la otra variable que teníamos pata aná
 # filtro de personas mayores de 18 años y ocupados
 df <- df %>% subset(age > 18 & ocu == 1) 
 
+df <- df %>% select(c("age", "cuentaPropia", "directorio", "estrato1", "formal", "ingtot", "maxEducLevel", "microEmpresa", "oficio", "orden", "p6050", "p6210", "p6210s1", "p6426", "relab", "secuencia_p", "sex", "sizeFirm", "totalHoursWorked", "y_horasExtras_m"))
+
+summary(df)
+
+cantidad_na <- sapply(df, function(x) sum(is.na(x)))
+cantidad_na <- data.frame(cantidad_na)
+porcentaje_na <- cantidad_na/nrow(df)
+
+p <- mean(porcentaje_na[,1])
+
+stat.desc(df)
+
+descriptivas <- stat.desc(df)
+
+descriptivas$Estadisticas <- row.names(descriptivas)
+
+descriptivas <- descriptivas %>% select(Estadisticas, everything())
+
+write_xlsx(descriptivas, "descriptivas.xlsx")
+
+aggregate(df$ingtot, by = list(df$sex), mean)
+
+aggregate(df$ingtot, by = list(df$p6210), mean)
+
+aggregate(df$age, by = list(df$sex), mean)

@@ -59,9 +59,10 @@ summary(df$ingtot)
 
 summary(df$y_total_m) # Andres, esta es la otra variable que teníamos pata análizar ocmo ingreso total
 
-# filtro de personas mayores de 18 años y ocupados
+# filtro de personas mayores de 18 años y ocupados, total 16397 observaciones
 df <- df %>% subset(age > 18 & ocu == 1) 
 
+# selección variables de interes
 df <- df %>% select(c("age", "cuentaPropia", "directorio", "estrato1", "formal", "ingtot", "maxEducLevel", "microEmpresa", "oficio", "orden", "p6050", "p6210", "p6210s1", "p6426", "relab", "secuencia_p", "sex", "sizeFirm", "totalHoursWorked", "y_horasExtras_m"))
 
 summary(df)
@@ -87,3 +88,6 @@ aggregate(df$ingtot, by = list(df$sex), mean)
 aggregate(df$ingtot, by = list(df$p6210), mean)
 
 aggregate(df$age, by = list(df$sex), mean)
+
+### Fin de proceso, se guarda df
+saveRDS(df, file = "df.rds")

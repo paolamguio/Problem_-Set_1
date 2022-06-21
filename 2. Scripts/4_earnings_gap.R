@@ -32,13 +32,8 @@ df <- import("df.rds")
 
 summary(df$ingtot)
 
-logingetot <-log(df$ingtot)
-
-logingetot <- data.frame(logingetot) 
-
-#falta incluir el logaritmo dentro de df
-
+df<- df %>% mutate(logingtot=log(ingtot))
 
 ## Estimación función brecha de ingresos por género
 
-reg <- lm(logingetot~sex, data)
+reg <- lm(logingtot~sex, df)

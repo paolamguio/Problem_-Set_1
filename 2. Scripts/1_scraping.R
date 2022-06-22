@@ -4,7 +4,7 @@
 # Grupo XX
 ########################################
 
-
+### Inicio del proceso
 
 ## Preparación del espacio y librerías ---------------------------------------------------
 rm(list = ls())
@@ -47,10 +47,6 @@ colnames(data)[1] <- "id"
 
 data <- as_tibble(data) 
 
-# Fin de proceso, se guarda la base de datos que se utilizará durante el desarrollo de la primera parte
-saveRDS(data, file = "data.rds")
-
-
 ## Descripción data ---------------------------------------------------------------
 #url
 urldata <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
@@ -58,4 +54,7 @@ urldata <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
 tabla_des <- urldata %>% read_html() %>% html_table()
 view(tabla_des)
 write_xlsx(tabla_des, "tabla_descripcion.xlsx")
+
+### Fin de proceso, se guarda la base de datos que se utilizará durante el desarrollo de la primera parte
+saveRDS(data, file = "data.rds")
 

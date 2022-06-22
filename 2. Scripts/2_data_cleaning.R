@@ -20,7 +20,10 @@ p_load(
   rvest,
   writexl,
   rio,
-  skimr
+  skimr,
+  pastecs,
+  PerformanceAnalytics,
+  naniar
 )
 
 
@@ -44,6 +47,11 @@ table(df$dsi) #la variable dsi indica en cero las personas empleadas
 
 table(df$ocu) #la variable ocu indica en uno las personas ocupadas
 
+df %>% subset(dsi == 0) %>% select(ingtot) %>% summary()
+df %>% subset(dsi == 1) %>% select(ingtot) %>% summary()
+df %>% subset(ocu == 0) %>% select(ingtot) %>% summary()
+df %>% subset(ocu == 1) %>% select(ingtot) %>% summary()
+
 table(df$clase) #todos los individuos estan en la zona urbana
 
 table(df$formal) #9676 personas hacen parte del sistema de seguridad social, trabajo formal
@@ -54,9 +62,112 @@ summary(df$ingtot)
 
 summary(df$y_total_m) # Andres, esta es la otra variable que teníamos pata análizar ocmo ingreso total
 
-#la variable de ingreso se define y justifica en el punto 3, la variable ingreso en sus diferentes tipos incluye el ingreso de personas desocupadas e inactivos, al igual
-# que ingresos no laborales como intereses como ayudas, lo que puede generar ruido en el modelo puesto que no dependen de la edad
 
-# filtro de personas mayores de 18 años y ocupados
+
+
+# filtro de personas mayores de 18 años y ocupados, total 16397 observaciones
+
 df <- df %>% subset(age > 18 & ocu == 1) 
 
+df %>% subset(is.na(y_total_m) == T) %>% select(ingtot) %>% summary()
+
+df %>% subset(ingtot == 0) %>% select(y_total_m) %>% summary()
+
+df <- df %>% replace_with_na(replace = list(ingtot = 0))
+
+summary(df$ingtot)
+
+df <- df %>% 
+  group_by(directorio) %>% 
+  mutate(mean_ingtot = mean(ingtot,na.rm=T))
+
+df <- df %>%
+  mutate(ingtot = ifelse(test = is.na(ingtot)==T,
+                            yes = mean_ingtot,
+                            no = ingtot))
+
+summary(df$ingtot)
+
+df <- df %>% subset(is.na(ingtot) == F)
+
+summary(df$ingtot)
+
+# selección variables de interes
+df <- df %>% select(c("age", "cuentaPropia", "directorio", "estrato1", "formal", "ingtot", "maxEducLevel", "microEmpresa", "oficio", "orden", "p6050", "p6210", "p6210s1", "p6426", "relab", "secuencia_p", "sex", "sizeFirm", "totalHoursWorked", "y_horasExtras_m"))
+
+df <- df %>% mutate(female = ifelse(sex == 0, 1, 0))
+
+df <- df %>% mutate(primaria = ifelse(p6210 == 3, 1, 0))
+
+df <- df %>% mutate(secundaria = ifelse(p6210 == 4, 1, 0))
+
+df <- df %>% mutate(media = ifelse(p6210 == 5, 1, 0))
+
+df <- df %>% mutate(universitaria = ifelse(p6210 == 6, 1, 0))
+
+df <- df %>% mutate(estrato_medio = ifelse(estrato1 == 3 | estrato1 == 4, 1, 0))
+
+df <- df %>% mutate(estrato_alto = ifelse(estrato1 == 5 | estrato1 == 6, 1, 0))
+
+summary(df)
+
+cantidad_na <- sapply(df, function(x) sum(is.na(x)))
+cantidad_na <- data.frame(cantidad_na)
+porcentaje_na <- cantidad_na/nrow(df)
+
+p <- mean(porcentaje_na[,1])
+
+stat.desc(df)
+
+descriptivas <- stat.desc(df)
+
+descriptivas$Estadisticas <- row.names(descriptivas)
+
+descriptivas <- descriptivas %>% select(Estadisticas, everything())
+
+write_xlsx(descriptivas, "descriptivas.xlsx")
+
+aggregate(df$ingtot, by = list(df$female), mean)
+
+aggregate(df$ingtot, by = list(df$p6210), mean)
+
+aggregate(df$age, by = list(df$female), mean)
+
+ggplot(data = df , mapping = aes(x = age , y = ingtot)) +
+  geom_point(col = "red" , size = 0.5)
+
+ggplot(data = df , 
+       mapping = aes(x = age , y = ingtot , group=as.factor(formal) , color=as.factor(formal))) +
+  geom_point()
+
+ggplot(data = df , 
+       mapping = aes(x = age , y = ingtot , group=as.factor(female) , color=as.factor(female))) +
+  geom_point()
+
+p <- ggplot(data=df) + 
+  geom_histogram(mapping = aes(x=ingtot , group=as.factor(female) , fill=as.factor(female)))
+
+p + scale_fill_manual(values = c("0"="green" , "1"="blue") , label = c("0"="Hombre" , "1"="Mujer") , name = "Sexo")
+
+box_plot <- ggplot(data=df , mapping = aes(as.factor(estrato1) , ingtot)) + 
+  geom_boxplot()
+
+box_plot <- box_plot +
+  geom_point(aes(colour=as.factor(female))) +
+  scale_color_manual(values = c("0"="red" , "1"="blue") , label = c("0"="Hombre" , "1"="Mujer") , name = "Sexo")
+
+box_plot
+
+box_plot2 <- ggplot(data=df , mapping = aes(as.factor(p6210) , ingtot)) + 
+  geom_boxplot()
+
+box_plot2 <- box_plot2 +
+  geom_point(aes(colour=as.factor(female))) +
+  scale_color_manual(values = c("0"="red" , "1"="blue") , label = c("0"="Hombre" , "1"="Mujer") , name = "Sexo")
+
+box_plot2
+
+df %>% select(c("age", "cuentaPropia", "formal", "ingtot", "microEmpresa", "totalHoursWorked", "female", "primaria", "secundaria", "media", "universitaria", "estrato_medio", "estrato_alto")) %>% chart.Correlation()
+
+### Fin de proceso, se guarda df
+saveRDS(df, file = "df.rds")

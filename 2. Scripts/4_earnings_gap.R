@@ -13,7 +13,6 @@ setwd("C:/Users/amorales/OneDrive - ANI/Documentos/GitHub/Problem_-Set_1/3. Stor
 
 # Llamado librerías
 require(pacman)
-require(stargazer)
 
 p_load(
   tidyverse,
@@ -21,7 +20,8 @@ p_load(
   writexl,
   rio,
   skimr,
-  pastecs
+  pastecs,
+  stargazer
 )
 
 library(datasets)
@@ -36,4 +36,6 @@ df<- df %>% mutate(logingtot=log(ingtot))
 
 ## Estimación función brecha de ingresos por género
 
-reg <- lm(logingtot~sex, df)
+reg <- lm(logingtot~female, df)
+
+stargazer(reg, type = "text")

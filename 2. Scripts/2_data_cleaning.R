@@ -20,7 +20,8 @@ p_load(
   writexl,
   rio,
   skimr,
-  pastecs
+  pastecs,
+  PerformanceAnalytics
 )
 
 
@@ -65,6 +66,20 @@ df <- df %>% subset(age > 18 & ocu == 1)
 # selección variables de interes
 df <- df %>% select(c("age", "cuentaPropia", "directorio", "estrato1", "formal", "ingtot", "maxEducLevel", "microEmpresa", "oficio", "orden", "p6050", "p6210", "p6210s1", "p6426", "relab", "secuencia_p", "sex", "sizeFirm", "totalHoursWorked", "y_horasExtras_m"))
 
+df <- df %>% mutate(female = ifelse(sex == 0, 1, 0))
+
+df <- df %>% mutate(primaria = ifelse(p6210 == 3, 1, 0))
+
+df <- df %>% mutate(secundaria = ifelse(p6210 == 4, 1, 0))
+
+df <- df %>% mutate(media = ifelse(p6210 == 5, 1, 0))
+
+df <- df %>% mutate(universitaria = ifelse(p6210 == 6, 1, 0))
+
+df <- df %>% mutate(estrato_medio = ifelse(estrato1 == 3 | estrato1 == 4, 1, 0))
+
+df <- df %>% mutate(estrato_alto = ifelse(estrato1 == 5 | estrato1 == 6, 1, 0))
+
 summary(df)
 
 cantidad_na <- sapply(df, function(x) sum(is.na(x)))
@@ -83,11 +98,47 @@ descriptivas <- descriptivas %>% select(Estadisticas, everything())
 
 write_xlsx(descriptivas, "descriptivas.xlsx")
 
-aggregate(df$ingtot, by = list(df$sex), mean)
+aggregate(df$ingtot, by = list(df$female), mean)
 
 aggregate(df$ingtot, by = list(df$p6210), mean)
 
-aggregate(df$age, by = list(df$sex), mean)
+aggregate(df$age, by = list(df$female), mean)
+
+ggplot(data = df , mapping = aes(x = age , y = ingtot)) +
+  geom_point(col = "red" , size = 0.5)
+
+ggplot(data = df , 
+       mapping = aes(x = age , y = ingtot , group=as.factor(formal) , color=as.factor(formal))) +
+  geom_point()
+
+ggplot(data = df , 
+       mapping = aes(x = age , y = ingtot , group=as.factor(female) , color=as.factor(female))) +
+  geom_point()
+
+p <- ggplot(data=df) + 
+  geom_histogram(mapping = aes(x=ingtot , group=as.factor(female) , fill=as.factor(female)))
+
+p + scale_fill_manual(values = c("0"="green" , "1"="blue") , label = c("0"="Hombre" , "1"="Mujer") , name = "Sexo")
+
+box_plot <- ggplot(data=df , mapping = aes(as.factor(estrato1) , ingtot)) + 
+  geom_boxplot()
+
+box_plot <- box_plot +
+  geom_point(aes(colour=as.factor(female))) +
+  scale_color_manual(values = c("0"="red" , "1"="blue") , label = c("0"="Hombre" , "1"="Mujer") , name = "Sexo")
+
+box_plot
+
+box_plot2 <- ggplot(data=df , mapping = aes(as.factor(p6210) , ingtot)) + 
+  geom_boxplot()
+
+box_plot2 <- box_plot2 +
+  geom_point(aes(colour=as.factor(female))) +
+  scale_color_manual(values = c("0"="red" , "1"="blue") , label = c("0"="Hombre" , "1"="Mujer") , name = "Sexo")
+
+box_plot2
+
+df %>% select(c("age", "cuentaPropia", "formal", "ingtot", "microEmpresa", "totalHoursWorked", "female", "primaria", "secundaria", "media", "universitaria", "estrato_medio", "estrato_alto")) %>% chart.Correlation()
 
 ### Fin de proceso, se guarda df
 saveRDS(df, file = "df.rds")

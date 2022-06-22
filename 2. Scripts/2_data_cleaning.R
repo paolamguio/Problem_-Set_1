@@ -21,7 +21,8 @@ p_load(
   rio,
   skimr,
   pastecs,
-  PerformanceAnalytics
+  PerformanceAnalytics,
+  naniar
 )
 
 
@@ -62,6 +63,29 @@ summary(df$y_total_m) # Andres, esta es la otra variable que teníamos pata aná
 
 # filtro de personas mayores de 18 años y ocupados, total 16397 observaciones
 df <- df %>% subset(age > 18 & ocu == 1) 
+
+df %>% subset(is.na(y_total_m) == T) %>% select(ingtot) %>% summary()
+
+df %>% subset(ingtot == 0) %>% select(y_total_m) %>% summary()
+
+df <- df %>% replace_with_na(replace = list(ingtot = 0))
+
+summary(df$ingtot)
+
+df <- df %>% 
+  group_by(directorio) %>% 
+  mutate(mean_ingtot = mean(ingtot,na.rm=T))
+
+df <- df %>%
+  mutate(ingtot = ifelse(test = is.na(ingtot)==T,
+                            yes = mean_ingtot,
+                            no = ingtot))
+
+summary(df$ingtot)
+
+df <- df %>% subset(is.na(ingtot) == F)
+
+summary(df$ingtot)
 
 # selección variables de interes
 df <- df %>% select(c("age", "cuentaPropia", "directorio", "estrato1", "formal", "ingtot", "maxEducLevel", "microEmpresa", "oficio", "orden", "p6050", "p6210", "p6210s1", "p6426", "relab", "secuencia_p", "sex", "sizeFirm", "totalHoursWorked", "y_horasExtras_m"))

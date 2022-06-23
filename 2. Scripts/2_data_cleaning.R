@@ -67,6 +67,8 @@ df %>% subset(is.na(y_total_m) == T) %>% select(ingtot) %>% summary()
 
 df %>% subset(ingtot == 0) %>% select(y_total_m) %>% summary()
 
+df2 <- df %>% subset(ingtot > 0)
+
 df <- df %>% subset(is.na(y_total_m) == F)
 
 summary(df$y_total_m)
@@ -74,7 +76,11 @@ summary(df$y_total_m)
 # selección variables de interes
 df <- df %>% select(c("age", "cuentaPropia", "directorio", "estrato1", "formal", "y_total_m", "maxEducLevel", "microEmpresa", "oficio", "orden", "p6050", "p6210", "p6210s1", "p6426", "relab", "secuencia_p", "sex", "sizeFirm", "totalHoursWorked", "y_horasExtras_m"))
 
+df2 <- df2 %>% select(c("age", "cuentaPropia", "directorio", "estrato1", "formal", "ingtot", "maxEducLevel", "microEmpresa", "oficio", "orden", "p6050", "p6210", "p6210s1", "p6426", "relab", "secuencia_p", "sex", "sizeFirm", "totalHoursWorked", "y_horasExtras_m"))
+
 df <- df %>% mutate(female = ifelse(sex == 0, 1, 0))
+
+df2 <- df2 %>% mutate(female = ifelse(sex == 0, 1, 0))
 
 df <- df %>% mutate(primaria = ifelse(p6210 == 3, 1, 0))
 
@@ -98,6 +104,17 @@ p <- mean(porcentaje_na[,1])
 
 df <- df %>% subset(is.na(maxEducLevel) == F)
 
+df2 <- df2 %>% subset(is.na(maxEducLevel) == F)
+
+df <- df %>% mutate(edu = case_when(maxEducLevel == 1 ~ 0,
+                                    maxEducLevel == 3 ~ p6210s1 + 2,
+                                    maxEducLevel == 4 ~ 7,
+                                    maxEducLevel == 5 ~ p6210s1 + 2,
+                                    maxEducLevel == 6 ~ 13,
+                                    maxEducLevel == 7 ~ p6210s1 + 13))
+
+summary(df$edu)
+
 stat.desc(df)
 
 descriptivas <- stat.desc(df)
@@ -110,11 +127,16 @@ write_xlsx(descriptivas, "descriptivas.xlsx")
 
 aggregate(df$y_total_m, by = list(df$female), mean)
 
+aggregate(df$edu, by = list(df$female), mean)
+
 aggregate(df$y_total_m, by = list(df$p6210), mean)
 
 aggregate(df$age, by = list(df$female), mean)
 
 ggplot(data = df , mapping = aes(x = age , y = y_total_m)) +
+  geom_point(col = "red" , size = 0.5)
+
+ggplot(data = df , mapping = aes(x = edu , y = y_total_m)) +
   geom_point(col = "red" , size = 0.5)
 
 ggplot(data = df , 
@@ -129,6 +151,11 @@ p <- ggplot(data=df) +
   geom_histogram(mapping = aes(x=y_total_m , group=as.factor(female) , fill=as.factor(female)))
 
 p + scale_fill_manual(values = c("0"="green" , "1"="blue") , label = c("0"="Hombre" , "1"="Mujer") , name = "Sexo")
+
+p2 <- ggplot(data=df) + 
+  geom_histogram(mapping = aes(x=edu , group=as.factor(female) , fill=as.factor(female)))
+
+p2 + scale_fill_manual(values = c("0"="green" , "1"="blue") , label = c("0"="Hombre" , "1"="Mujer") , name = "Sexo")
 
 box_plot <- ggplot(data=df , mapping = aes(as.factor(estrato1) , y_total_m)) + 
   geom_boxplot()
@@ -148,7 +175,9 @@ box_plot2 <- box_plot2 +
 
 box_plot2
 
-df %>% select(c("age", "cuentaPropia", "formal", "y_total_m", "microEmpresa", "totalHoursWorked", "female", "primaria", "secundaria", "media", "universitaria", "estrato_medio", "estrato_alto")) %>% chart.Correlation()
+df %>% select(c("age", "cuentaPropia", "formal", "y_total_m", "microEmpresa", "totalHoursWorked", "female", "estrato_medio", "estrato_alto", "edu")) %>% chart.Correlation()
 
 ### Fin de proceso, se guarda df
 saveRDS(df, file = "df.rds")
+
+saveRDS(df2, file = "df2.rds")

@@ -54,9 +54,15 @@ ggplot(dbIncome) + geom_point(aes(x=age,y=Income))
 
 #Estimar edad pico
 coefs <- modIncome$coefficients
-b1 <- coefs[2]
-b2 <- coefs[3]
-peak_age <- -b1/(2*b2)
+b1 <- coefs[1]
+b2 <- coefs[2]
+b3 <- coefs[3]
+
+b1
+b2
+b3
+
+peak_age <- -b2/(2*b3)
 peak_age
 
 #Estimar los errores estandares
@@ -65,10 +71,10 @@ eta_mod.fn <- function(data, index){
   
   coefs <- f$coef
   
-  b1 <- coefs[2]
-  b2 <- coefs[3]
+  b2 <- coefs[2]
+  b3 <- coefs[3]
   
-  peak_age <- -b1/(2*b2)
+  peak_age <- -b2/(2*b3)
   return(peak_age)
 }
 n<- nrow(dbIncome)

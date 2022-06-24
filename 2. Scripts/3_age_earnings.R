@@ -20,60 +20,60 @@ p_load(
   rvest,
   writexl,
   rio,
-  skimr
+  skimr,
+  stargazer,
+  tidyverse,
+  boot
 )
-
-
-
-
-
 
 ## Data cleaning
 # Se importa base de datos obtenida del scraping
-dbIncome <- readRDS("data.rds")
-
-# Revisión preliminar de df
-
-dbIncome <- dbIncome %>% subset(age > 18 & ocu == 1) 
+dbIncome <- readRDS("df.rds")
 
 
 #Crear las variables a utilizar en el modelo
 dbIncome <- dbIncome %>% mutate(age2 = age*age)
 
-#Seleccionar la variable de ingreso
-cantidad_na <- sapply(dbIncome, function(x) sum(is.na(x)))
-cantidad_na <- data.frame(cantidad_na)
-porcentaje_na <- cantidad_na/nrow(dbIncome)
-
-filtro <- porcentaje_na$cantidad_na > 0.05
-variables_eliminar <- porcentaje_na$variable[!filtro]
-k0 <- ncol(dbIncome)
-dbIncome <- dbIncome %>%
-  select(-variables_eliminar)
-
-p <- mean(porcentaje_na[,1])
-summary(dbIncome)
-str(dbIncome)
-
-
 #Correr el modelo
-modIncome<- lm(y_salary_m ~ age+age2, data = dbIncome)
+modIncome<- lm(y_total_m ~ age+age2, data = dbIncome)
 summary(modIncome)
 
-install.packages("stargazer")
-require("stargazer")
+
 stargazer(modIncome,type="text")
-coefs <- modIncome$coefficients
+
 
 #Dibujar ingreso contra edad
-require("tidyverse")
-ggplot(dbIncome) + geom_point(aes(x=age,y=y_salary_m))
+ggplot(dbIncome) + geom_point(aes(x=age,y=y_total_m))
 ggplot(data = dbIncome , 
-       mapping = aes(x = age , y = y_salary_m , group=as.factor(formal) , color=as.factor(formal))) +
+       mapping = aes(x = age , y = y_total_m , group=as.factor(formal) , color=as.factor(formal))) +
   geom_point()
 
 #Dibujar ingreso estimado contra edad
-dbIncome <- dbIncome %>% mutate(Ingreso = coefs[1]+coefs[2]*dbIncome$age + coefs[3]*dbIncome$age2)
-ggplot(data = dbIncome , mapping = aes(x = age , y = Ingreso)) 
-Income <- dbIncome$Ingreso
-Edad <- dbIncome$age
+dbIncome <- dbIncome %>%ungroup() %>% mutate(Income = predict(modIncome))
+ggplot(dbIncome) + geom_point(aes(x=age,y=Income))
+
+#Estimar edad pico
+coefs <- modIncome$coefficients
+b1 <- coefs[2]
+b2 <- coefs[3]
+peak_age <- -b1/(2*b2)
+peak_age
+
+#Estimar los errores estandares
+eta_mod.fn <- function(data, index){
+  f <- lm(y_total_m~age + age2, data, subset = index)
+  
+  coefs <- f$coef
+  
+  b1 <- coefs[2]
+  b2 <- coefs[3]
+  
+  peak_age <- -b1/(2*b2)
+  return(peak_age)
+}
+n<- nrow(dbIncome)
+eta_mod.fn(dbIncome, 1:n)
+
+results <- boot(data = dbIncome, eta_mod.fn, R = 5000)
+
+results

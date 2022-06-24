@@ -74,6 +74,6 @@ eta_mod.fn <- function(data, index){
 n<- nrow(dbIncome)
 eta_mod.fn(dbIncome, 1:n)
 
-results <- boot(data = dbIncome, eta_mod.fn, R = 5000)
-
+set.seed(22)
+results <- boot(data = dbIncome, eta_mod.fn, R = 1000)
 results

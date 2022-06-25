@@ -26,10 +26,8 @@ p_load(
   boot
 )
 
-## Data cleaning
 # Se importa base de datos obtenida del scraping
 dbIncome <- readRDS("df.rds")
-
 
 #Crear las variables a utilizar en el modelo
 dbIncome <- dbIncome %>% mutate(age2 = age*age)

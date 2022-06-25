@@ -33,6 +33,8 @@ df <- import("df.rds")
 
 df2 <- import("df2.rds")
 
+df3 <- import("df3.rds")
+
 summary(df$y_total_m)
 
 summary(df2$ingtot)
@@ -44,6 +46,10 @@ df <- df %>% mutate(age2 = age^2)
 df2<- df2 %>% mutate(logingtot=log(ingtot))
 
 df2 <- df2 %>% mutate(age2 = age^2)
+
+df3<- df3 %>% mutate(logingtot=log(y_total_m))
+
+df3 <- df3 %>% mutate(age2 = age^2)
 
 df %>% select(c("age", "age2", "cuentaPropia", "formal", "logingtot", "microEmpresa", "totalHoursWorked", "female", "estrato_medio", "estrato_alto", "edu")) %>% chart.Correlation()
 
@@ -112,6 +118,14 @@ boot_male2 <- boot(data = df2, eta_mod.fn, female_bar = 0, R = 5000)
 
 boot_male2
 
+boot_female3 <- boot(data = df3, eta_mod.fn, female_bar = 1, R = 5000)
+
+boot_female3
+
+boot_male3 <- boot(data = df3, eta_mod.fn, female_bar = 0, R = 5000)
+
+boot_male3
+
 CI_female <- c(peak_age_female - 1.96*0.4722849, peak_age_female + 1.96*0.4722849)
 
 CI_female
@@ -127,6 +141,14 @@ CI_female2
 CI_male2 <- c(boot_male2$t0 - 1.96*0.7331719, boot_male2$t0 + 1.96*0.7331719)
 
 CI_male2
+
+CI_female3 <- c(boot_female3$t0 - 1.96*0.5063675, boot_female3$t0 + 1.96*0.5063675)
+
+CI_female3
+
+CI_male3 <- c(boot_male3$t0 - 1.96*0.4089887, boot_male3$t0 + 1.96*0.4089887)
+
+CI_male3
 
 reg3 <- lm(logingtot~female + age + age2 + edu + formal + factor(oficio) + factor(sizeFirm) + totalHoursWorked + estrato_medio + estrato_alto, df)
 

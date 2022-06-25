@@ -10,7 +10,6 @@
 rm(list = ls())
 
 setwd("C:/Users/amorales/OneDrive - ANI/Documentos/GitHub/Problem_-Set_1/3. Stores")
-#setwd("C:/Users/ocaco/OneDrive/15. Maestria Economia/9. Big Data/3. GitHub/Problem_-Set_1/3. Stores")
 
 # Llamado librerías
 require(pacman)
@@ -22,7 +21,8 @@ p_load(
   rio,
   skimr,
   pastecs,
-  PerformanceAnalytics
+  PerformanceAnalytics,
+  naniar
 )
 
 
@@ -55,17 +55,13 @@ table(df$clase) #todos los individuos estan en la zona urbana
 
 table(df$formal) #9676 personas hacen parte del sistema de seguridad social, trabajo formal
 
-table(df$relab) #1. Quimicos-fisicos, 2. Arquitecto-Ingenieros, 3. Dibujantes, 4. Pilotos, 5. Biologos, 6. Medicos, 7. Enfermeros, 8. Economistas, 11. Contadores, 12. Abogados
+table(df$relab)
 
 summary(df$ingtot)
 
 summary(df$y_total_m) # Andres, esta es la otra variable que teníamos pata análizar ocmo ingreso total
 
-
-
-
 # filtro de personas mayores de 18 años y ocupados, total 16397 observaciones
-
 df <- df %>% subset(age > 18 & ocu == 1) 
 
 df %>% subset(is.na(y_total_m) == T) %>% select(ingtot) %>% summary()
@@ -74,7 +70,41 @@ df %>% subset(ingtot == 0) %>% select(y_total_m) %>% summary()
 
 df2 <- df %>% subset(ingtot > 0)
 
+df %>% subset(y_total_m < 1000) %>% select(y_total_m)
+
+df3 <- df %>% replace_with_na(replace = list(y_total_m = c(84, 97)))
+
+df3 <- df3 %>% 
+  group_by(directorio) %>% 
+  mutate(mean_y_total_m = mean(y_total_m,na.rm=T))
+
+df3 <- df3 %>%
+  mutate(y_total_m = ifelse(test = is.na(y_total_m)==T,
+                            yes = mean_y_total_m,
+                            no = y_total_m))
+
+summary(df3$y_total_m)
+
+df3 <- df3 %>% 
+  group_by(maxEducLevel) %>% 
+  mutate(mean_y_total_m2 = mean(y_total_m,na.rm=T))
+
+df3 <- df3 %>%
+  mutate(y_total_m = ifelse(test = is.na(y_total_m)==T,
+                            yes = mean_y_total_m2,
+                            no = y_total_m))
+
+summary(df3$y_total_m)
+
 df <- df %>% subset(is.na(y_total_m) == F)
+
+summary(df$y_total_m)
+
+df %>% subset(y_total_m < 1000) %>% select(y_total_m) %>% summary()
+
+df %>% subset(y_total_m < 1000) %>% count()
+
+df <- df %>% subset(y_total_m > 1000)
 
 summary(df$y_total_m)
 
@@ -83,9 +113,13 @@ df <- df %>% select(c("age", "cuentaPropia", "directorio", "estrato1", "formal",
 
 df2 <- df2 %>% select(c("age", "cuentaPropia", "directorio", "estrato1", "formal", "ingtot", "maxEducLevel", "microEmpresa", "oficio", "orden", "p6050", "p6210", "p6210s1", "p6426", "relab", "secuencia_p", "sex", "sizeFirm", "totalHoursWorked", "y_horasExtras_m"))
 
+df3 <- df3 %>% select(c("age", "cuentaPropia", "directorio", "estrato1", "formal", "y_total_m", "maxEducLevel", "microEmpresa", "oficio", "orden", "p6050", "p6210", "p6210s1", "p6426", "relab", "secuencia_p", "sex", "sizeFirm", "totalHoursWorked", "y_horasExtras_m"))
+
 df <- df %>% mutate(female = ifelse(sex == 0, 1, 0))
 
 df2 <- df2 %>% mutate(female = ifelse(sex == 0, 1, 0))
+
+df3 <- df3 %>% mutate(female = ifelse(sex == 0, 1, 0))
 
 df <- df %>% mutate(primaria = ifelse(p6210 == 3, 1, 0))
 
@@ -110,6 +144,8 @@ p <- mean(porcentaje_na[,1])
 df <- df %>% subset(is.na(maxEducLevel) == F)
 
 df2 <- df2 %>% subset(is.na(maxEducLevel) == F)
+
+df3 <- df3 %>% subset(is.na(maxEducLevel) == F)
 
 df <- df %>% mutate(edu = case_when(maxEducLevel == 1 ~ 0,
                                     maxEducLevel == 3 ~ p6210s1 + 2,
@@ -186,3 +222,5 @@ df %>% select(c("age", "cuentaPropia", "formal", "y_total_m", "microEmpresa", "t
 saveRDS(df, file = "df.rds")
 
 saveRDS(df2, file = "df2.rds")
+
+saveRDS(df3, file = "df3.rds")

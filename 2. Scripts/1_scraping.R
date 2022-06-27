@@ -1,15 +1,13 @@
-########################################
+
 # Data Scraping
 # Problem_Set_1 
-# Grupo XX
-########################################
+# Andres Martinez, Paola Morales y Oscar Cortes 
+--------------------------------------------------
+  
+## preparación del espacio
+  rm(list = ls())
 
-### Inicio del proceso
-
-## Preparación del espacio y librerías ---------------------------------------------------
-rm(list = ls())
-
-# Llamado librerías
+## llamado librerías de la sesión
 require(pacman)
 
 p_load(
@@ -21,13 +19,14 @@ p_load(
 library(datasets)
 library(data.table)
 
+###--- 1. scrape de datos ---###
 
-## scrape de datos como tabla desde sitio web -------------------------------------------------------------
-# url
+# inicio del proceso
+# scrape de datos como tabla desde sitio web 
 url <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_"
 
-# Almacenamiento de datos en dataframe
-# Los datos contienen información de la GEIH 2018 para Bogotá
+# almacenamiento de datos en dataframe
+# los datos contienen información de la GEIH 2018 para Bogotá
 data <- data.frame()
 for (i in 1:10) {
   url_i <- paste0(url, i, ".html")
@@ -37,24 +36,28 @@ for (i in 1:10) {
   data <- rbind.data.frame(data, tablas)
 }
 
-# Revisión de data
+###--- 2. inspección de datos ---###
+
+## revisión de data
 view(data)
 
-# Renombre primera columna en dataframe
+## renombre primera columna en dataframe
 colnames(data)[1] <- "id"
 
-# Se convierte el dataframe a tibble, siendo este último una versión mejorada de dataframe
-
+## se convierte el dataframe a tibble, siendo este último una versión mejorada de dataframe
 data <- as_tibble(data) 
 
-## Descripción data ---------------------------------------------------------------
-#url
+###--- 3. descripción de datos ---###
+
+##url
 urldata <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
+
+###--- 4. base de datos final ---###
 
 tabla_des <- urldata %>% read_html() %>% html_table()
 view(tabla_des)
 write_xlsx(tabla_des, "tabla_descripcion.xlsx")
 
-### Fin de proceso, se guarda la base de datos que se utilizará durante el desarrollo de la primera parte
+## fin de proceso, se guarda la base de datos que se utilizará durante el desarrollo de la primera parte
 saveRDS(data, file = "data.rds")
 

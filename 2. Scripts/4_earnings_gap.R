@@ -46,6 +46,11 @@ df2 <- df2 %>% mutate(age2 = age^2)
 df3<- df3 %>% mutate(logingtot=log(y_total_m))
 df3 <- df3 %>% mutate(age2 = age^2)
 
+p <- ggplot(data=df) + 
+  geom_histogram(mapping = aes(x=logingtot , group=as.factor(female) , fill=as.factor(female)))
+p + scale_fill_manual(values = c("0"="green" , "1"="blue") , label = c("0"="Hombre" , "1"="Mujer") , name = "Sexo") # histograma relación ingreso por género, distribución de los datos hacia la izquierda, es asimétrica, lo mejor que se puede hacer es transformar la seria a log y de esta forma normalizar los datos 
+
+
 ## gráfico de correlación entre variables
 df %>% select(c("age", "age2", "formal", "logingtot", "totalHoursWorked", "female", "estrato_medio", "estrato_alto", "edu")) %>% chart.Correlation()
 
@@ -70,7 +75,7 @@ b2 <- coef[3]
 b3 <- coef[4]
 b4 <- coef[5]
 
-## se calcula la elasticidad ingreso - años en la media
+## se calcula el efecto marginal ingreso - años en la media para las mujeres
 age_bar <- mean(df$age)
 elast <- b1 + b4*age_bar
 elast
@@ -78,17 +83,19 @@ elast
 ## se genera la predicción del logaritmo del ingreso
 df <- df %>% ungroup() %>% mutate(y_hat = predict(reg2))
 
-##
 ggplot(data = df , 
        mapping = aes(x = age , y = y_hat , group=as.factor(female) , color=as.factor(female))) +
   geom_point()
 
-## 
+## cálculo peak age por género 
 peak_age_female <- (-b2-b4)/(2*b3)
 peak_age_male <- (-b2)/(2*b3)
 
-## cálculo de errores estándar
-eta_mod.fn <- function(data, index, female_bar){
+peak_age_female
+peak_age_male
+
+## se define función para el cálculo de peak age por género
+eta_mod.fn <- function(data, index, female_bar){ # argumentos de la función
   f <- lm(logingtot~female + age + age2 + age:female, data, subset = index)
 
   coef <- f$coef
@@ -102,8 +109,9 @@ eta_mod.fn <- function(data, index, female_bar){
   return(peak_age)
 }
 
-eta_mod.fn(df, 1:14631, 1)
-eta_mod.fn(df, 1:14631, 0)
+# Se aplica la función
+eta_mod.fn(df, 1:14629, 1)
+eta_mod.fn(df, 1:14629, 0)
 
 ## semilla
 set.seed(101010)
@@ -130,11 +138,11 @@ boot_female3
 boot_male3 <- boot(data = df3, eta_mod.fn, female_bar = 0, R = 5000)
 boot_male3
 
-## 
-CI_female <- c(peak_age_female - 1.96*0.4722849, peak_age_female + 1.96*0.4722849)
+## cálculo de los intervalos de confianza por género para df
+CI_female <- c(peak_age_female - 1.96*0.4694526, peak_age_female + 1.96*0.4694526)
 CI_female
 
-CI_male <- c(peak_age_male - 1.96*0.3856051, peak_age_male + 1.96*0.3856051)
+CI_male <- c(peak_age_male - 1.96*0.3823748, peak_age_male + 1.96*0.3823748)
 CI_male
 
 CI_female2 <- c(boot_female2$t0 - 1.96*0.6460969, boot_female2$t0 + 1.96*0.6460969)
@@ -149,7 +157,7 @@ CI_female3
 CI_male3 <- c(boot_male3$t0 - 1.96*0.4089887, boot_male3$t0 + 1.96*0.4089887)
 CI_male3
 
-## 
+## regresión con controles
 reg3 <- lm(logingtot~female + age + age2 + edu + formal + factor(oficio) + factor(sizeFirm) + totalHoursWorked + estrato_medio + estrato_alto, df)
 stargazer(reg, reg2, reg3, type = "text")
 
@@ -157,26 +165,18 @@ df <- df %>% ungroup() %>% mutate(y_hat2 = predict(reg3))
 
 ggplot(data = df , 
        mapping = aes(x = age , y = y_hat2 , group=as.factor(female) , color=as.factor(female))) +
-  geom_point()
+  geom_point() #se evidencian diferencias entre el ingreso estimado de las mujeres comparado con el de los hombre
 
-##
-reg4 <- lm(logingtot~female + age + age2 + age + age:female + edu + formal + factor(oficio) + factor(sizeFirm) + totalHoursWorked + estrato_medio + estrato_alto, df)
-stargazer(reg, reg2, reg3, reg4, type = "text")
+## The Frisch-Waugh-Lovell (FWL) Theorem
+# modelo original sin la variable female
+reg4 <- lm(logingtot~age + age2 + edu + formal + factor(oficio) + factor(sizeFirm) + totalHoursWorked + estrato_medio + estrato_alto, df)
 
-df <- df %>% ungroup() %>% mutate(y_hat3 = predict(reg4))
+# modelo de la variable female contra las demás variables control
+reg5 <- lm(female~age + age2 + edu + formal + factor(oficio) + factor(sizeFirm) + totalHoursWorked + estrato_medio + estrato_alto, df)
 
-ggplot(data = df , 
-       mapping = aes(x = age , y = y_hat3 , group=as.factor(female) , color=as.factor(female))) +
-  geom_point()
+# se guardan los residuales de los dos modelos anteriores
+df <- df %>% mutate(res_reg4 = reg4$residuals, res_reg5 = reg5$residuals)
 
-##
-reg5 <- lm(logingtot~age + age2 + edu + formal + factor(oficio) + factor(sizeFirm) + totalHoursWorked + estrato_medio + estrato_alto, df)
-
-##
-reg6 <- lm(female~age + age2 + edu + formal + factor(oficio) + factor(sizeFirm) + totalHoursWorked + estrato_medio + estrato_alto, df)
-
-df <- df %>% mutate(res_reg5 = reg5$residuals, res_reg6 = reg6$residuals)
-
-##
-reg7 <- lm(res_reg5~res_reg6, df)
-stargazer(reg, reg2, reg3, reg7, type = "text")
+## Se aplica el teorema FWL
+reg6 <- lm(res_reg4~res_reg5, df)
+stargazer(reg, reg2, reg3, reg6, type = "text")

@@ -5,7 +5,7 @@
 #--------------------------------------------------
   
 ## preparación del espacio
-#setwd("C:/Users/amorales/OneDrive - ANI/Documentos/GitHub/Problem_-Set_1/3. Stores")
+setwd("C:/Users/amorales/OneDrive - ANI/Documentos/GitHub/Problem_-Set_1/3. Stores")
 
 rm(list = ls())
 setwd("C:/Users/ocaco/OneDrive/15. Maestria Economia/9. Big Data/3. GitHub/Problem_-Set_1/3. Stores")
@@ -24,7 +24,6 @@ p_load(
   tidyverse,
   boot
 )
-
 
 # Se importa base de datos obtenida del scraping
 dbIncome <- readRDS("df.rds")
@@ -67,6 +66,18 @@ b3 <- coefs[3]
 b1
 b2
 b3
+
+age_mean<- mean(dbIncome$age)
+efecto_mrg<- b2+b3*age_mean
+efecto_mrg
+
+efecto_mrg2<- b2+b3*20
+efecto_mrg2
+
+efecto_mrg3<- b2+b3*50
+efecto_mrg3
+
+efecto_mrg3 - efecto_mrg2
 
 peak_age <- -b2/(2*b3)
 peak_age

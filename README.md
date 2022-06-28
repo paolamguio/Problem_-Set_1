@@ -15,7 +15,12 @@ Oscar Cortes - XXXXXX
 Este repositorio contiene las siguientes carpetas
 
 - `document`: Contiene el documento final del problem set 
-- `scripts`: Contiene los scripts `1_scraping`, `2_data_cleaning`, `3_age_earnings`, `4_earnings_gap`, `5_predecting_earnings`
+- `scripts`: Contiene los scripts
+	- `1_scraping`: Este script contiene el proceso de web scraping para obtener la base de datos
+	- `2_data_cleaning`: Este script contiene el proceso para limpiar la base de datos y las estadísticas descriptivas
+	- `3_age_earnings`: Este script contiene el proceso de estimación del peak age y los intervalos de confianza
+	- `4_earnings_gap`: Este script contiene el proceso de estimación del peak age por género, los intervalos de confianza por género y la estimación de la brecha salarial por género con controles
+	- `5_predecting_earnings`: Este script contiene el proceso de predicción del ingreso
 - `stores`: Contiene las bases de datos
 	- `data`: Esta base de datos se obtiene del web scraping
 	- `df`: Esta base de datos considera como variable ingreso y_total_m y se eliminan los missing value

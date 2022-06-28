@@ -93,9 +93,28 @@ MSE[7,2]<-with(test,mean((logingtot-model7)^2))
 stargazer(model1, model2, model3, model4, model5, model6, model7, type = "text")
 
 
-###--- 2. Validación cruzada ---###
 
 
+v_alphas <- c()
+
+for (j in 1:nrow(test)){
+  uj <- model7$residuals[j]
+  hj <- lm.influence(model7)$hat[j]
+  alpha <- uj/(1-hj)
+  v_alphas <-c(v_alphas,alpha)
+}
+test<- test %>% mutate(alphas = v_alphas)
+test<- test %>% mutate(abs_alpha = abs(v_alphas))
+
+levearage<-  test %>% select(c("age", "age2", "female", "edu", "formal", "model7", "logingtot","oficio","alphas","abs_alpha"))
+head(levearage)
+tail(levearage)
+
+levearage<- levearage %>% mutate %>% order(levearage[,ncol(levearage)],decreasing=TRUE)
+  
+  
+
+###--- 2. Validación cruzada - KFOLD---###
 
 reg1 <- train(logingtot~.,
               data=df,

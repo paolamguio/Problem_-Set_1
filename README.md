@@ -15,7 +15,7 @@ Oscar Cortes - XXXXXX
 Este repositorio contiene las siguientes carpetas
 
 - `document`: Contiene el documento final del problem set 
-- `scripts`: Contiene los scripts `1_scraping`, `2_data_cleaning`, `3_age_earnings`, `4_earnings_gap`
+- `scripts`: Contiene los scripts `1_scraping`, `2_data_cleaning`, `3_age_earnings`, `4_earnings_gap`, `5_predecting_earnings`
 - `stores`: Contiene las bases de datos
 	- `data`: Esta base de datos se obtiene del web scraping
 	- `df`: Esta base de datos considera como variable ingreso y_total_m y se eliminan los missing value

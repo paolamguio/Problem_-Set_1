@@ -110,8 +110,7 @@ levearage<-  test %>% select(c("age", "age2", "female", "edu", "formal", "model7
 head(levearage)
 tail(levearage)
 
-levearage<- levearage %>% mutate %>% order(levearage[,ncol(levearage)],decreasing=TRUE)
-  
+
   
 
 ###--- 2. Validación cruzada - KFOLD---###

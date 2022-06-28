@@ -59,7 +59,6 @@ df %>% select(c("age", "age2", "formal", "logingtot", "totalHoursWorked", "femal
 reg <- lm(logingtot~female, df)
 stargazer(reg, type = "text")
 
-##
 reg2 <- lm(logingtot~female + age + age2 + age:female, df)
 stargazer(reg, reg2, type = "text")
 

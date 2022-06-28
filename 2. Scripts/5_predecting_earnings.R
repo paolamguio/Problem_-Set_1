@@ -35,10 +35,12 @@ dbCompleta <- readRDS("db5.rds")
 
 ###--- 1. Predicción fuera de muestra ---###
 set.seed(10101)
-dbCompleta <-dbCompleta%>%mutate(holdout=as.logical(1:nrow(dbCompleta)%in%
-                                                      sample(nrow(dbCompleta),nrow(dbCompleta)*.3)))
-test <- dbCompleta[dbCompleta$holdout==T,]
-train <- dbCompleta[dbCompleta$holdout==F,]
+
+df<-  dbCompleta %>% select(c("age", "age2", "female", "edu", "formal", "y_total_m", "logingtot","oficio"))
+df <-df%>%mutate(holdout=as.logical(1:nrow(df)%in%
+                                                      sample(nrow(df),nrow(df)*.3)))
+test <- df[df$holdout==T,]
+train <- df[df$holdout==F,]
 
 MSE<-matrix(rep(0,21),nrow=7,ncol=3)
 colnames(MSE)<- c("Modelo","MSE","MSE_k-fold")
@@ -88,16 +90,12 @@ test$model7<-predict(model7,newdata = test)
 MSE[7,1]<-7
 MSE[7,2]<-with(test,mean((logingtot-model7)^2))
 
-stargazer(model7, type = "text")
-stargazer(model1, model2, model3, type = "text")
 stargazer(model1, model2, model3, model4, model5, model6, model7, type = "text")
 
 
 ###--- 2. Validación cruzada ---###
 
-colnames(dbCompleta)
 
-df<-  dbCompleta %>% select(c("age", "age2", "female", "edu", "formal", "y_total_m", "logingtot","oficio"))
 
 reg1 <- train(logingtot~.,
               data=df,
@@ -149,10 +147,19 @@ reg7 <- train(logingtot~age+age2+female+edu+formal+age:female+poly(oficio,8),
 MSE[7,3]<- reg7$results$RMSE^2
 
 stargazer(MSE, type = "text")
-reg1
-reg2
-reg3
-reg4
-reg5
-reg6
-reg7
+
+###--- 3. LOOCV ---###
+
+n<- nrow(df)
+loocv<-matrix(rep(0,n),nrow=n,ncol=3)
+loocv[,1]<-df$logingtot
+colnames(loocv)<- c("Observacion","Prediccion","MSE")
+for (i in 1:n) {
+  reg_i<-lm(logingtot~age+age2+female+edu+formal+age:female+poly(oficio,8),
+            data=df[-i,])#entrena con los datos menos la i observación
+  loocv[i,2]<-predict(reg_i,newdata=df[i,]) #predice con la i observación
+  loocv[i,3]<-(loocv[i,1]-loocv[i,2])^2
+  }
+loocv <- as.data.frame(loocv)
+MSE_loocv <- mean(loocv$MSE)
+MSE_loocv

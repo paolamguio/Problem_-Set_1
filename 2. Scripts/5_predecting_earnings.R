@@ -24,7 +24,8 @@ p_load(
   stargazer,
   tidyverse,
   boot,
-  mcmspatial
+  mcmspatial,
+  caret
 )
 
 ##Cargue de la base de datos
@@ -32,74 +33,126 @@ p_load(
 # Se importa base de datos obtenida del scraping
 dbCompleta <- readRDS("db5.rds")
 
-
-
-#Modelo con solo la constante
-modConst<- lm(logingtot~1, data = dbCompleta)
-summary(modConst)
-const <- modConst$coefficients
-
-#Modelo con la edad
-modAge<- lm(logingtot~age+age2, data = dbCompleta)
-
-coefs_age <- modAge$coefficients
-
-#Modelo con la edad y sexo
-modFem <- lm(logingtot~female, dbCompleta)
-
-coefs_fem <- modFem$coefficients
-
-#5 modelos diferentes
-
-reg1 <- lm(logingtot~female + age + age2 + edu, dbCompleta)
-coefs_reg1 <- reg1$coefficients
-
-reg2 <- lm(logingtot~female + age + age2 + age + formal, dbCompleta)
-coefs_reg2 <- reg2$coefficients
-
-reg3 <- lm(logingtot~female + age + age2 + edu + formal, dbCompleta)
-coefs_reg3 <- reg3$coefficients
-
-
-#Comparación de errores
-summary(modConst)
-summary(modAge)
-summary(modFem)
-summary(reg1)
-stargazer(modConst, modAge, modFem, reg1, reg2, reg3, type = "text")
-
-#Prediccion
+###--- 1. Predicción fuera de muestra ---###
 set.seed(10101)
 dbCompleta <-dbCompleta%>%mutate(holdout=as.logical(1:nrow(dbCompleta)%in%
                                                       sample(nrow(dbCompleta),nrow(dbCompleta)*.3)))
 test <- dbCompleta[dbCompleta$holdout==T,]
 train <- dbCompleta[dbCompleta$holdout==F,]
 
+MSE<-matrix(rep(0,21),nrow=7,ncol=3)
+colnames(MSE)<- c("Modelo","MSE","MSE_k-fold")
 #modelo 1
-model1 <- lm(y_total_m~1, data = train)
+model1 <- lm(logingtot~1, data = train)
 summary(model1)
 coef(model1)
 mean(train$y_total_m)
 test$model1<-predict(model1,newdata = test)
-with(test,mean((y_total_m-model1)^2))
+MSE[1,1]<-1
+MSE[1,2]<- with(test,mean((logingtot-model1)^2))
+
 
 #modelo 2
-model2 <- lm(y_total_m~age+age2, data = train)
+model2 <- lm(logingtot~age+age2, data = train)
 test$model2<-predict(model2,newdata = test)
-with(test,mean((y_total_m-model2)^2))
+MSE[2,1]<-2
+MSE[2,2]<- with(test,mean((logingtot-model2)^2))
 
 #modelo 3
-model3 <- lm(y_total_m~age+age2+female, data = train)
+model3 <- lm(logingtot~age+age2+female, data = train)
 test$model3<-predict(model3,newdata = test)
-with(test,mean((y_total_m-model3)^2))
+MSE[3,1]<-3
+MSE[3,2]<-with(test,mean((logingtot-model3)^2))
 
 #modelo 4
-model4 <- lm(y_total_m~age+age2+female+edu, data = train)
+model4 <- lm(logingtot~age+age2+female+edu, data = train)
 test$model4<-predict(model4,newdata = test)
-with(test,mean((y_total_m-model4)^2))
+MSE[4,1]<-4
+MSE[4,2]<-with(test,mean((logingtot-model4)^2))
 
 #modelo 5
-model5 <- lm(y_total_m~age+age2+female+edu+formal, data = train)
+model5 <- lm(logingtot~age+age2+female+edu+formal, data = train)
 test$model5<-predict(model5,newdata = test)
-with(test,mean((y_total_m-model5)^2))
+MSE[5,1]<-5
+MSE[5,2]<-with(test,mean((logingtot-model5)^2))
 
+#modelo 6
+model6 <- lm(logingtot~age+age2+female+edu+formal+age:female, data = train)
+test$model6<-predict(model6,newdata = test)
+MSE[6,1]<-6
+MSE[6,2]<-with(test,mean((logingtot-model6)^2))
+
+#modelo 7
+model7 <- lm(logingtot~age+age2+female+edu+formal+age:female+poly(oficio,8), data = train)
+test$model7<-predict(model7,newdata = test)
+MSE[7,1]<-7
+MSE[7,2]<-with(test,mean((logingtot-model7)^2))
+
+stargazer(model7, type = "text")
+stargazer(model1, model2, model3, type = "text")
+stargazer(model1, model2, model3, model4, model5, model6, model7, type = "text")
+
+
+###--- 2. Validación cruzada ---###
+
+colnames(dbCompleta)
+
+df<-  dbCompleta %>% select(c("age", "age2", "female", "edu", "formal", "y_total_m", "logingtot","oficio"))
+
+reg1 <- train(logingtot~.,
+              data=df,
+              trControl = trainControl(method = "cv", number = 5),
+              method= "null"
+              )
+MSE[1,3]<- reg1$results$RMSE^2
+reg2 <- train(logingtot~age+age2,
+              data=df,
+              trControl = trainControl(method = "cv", number = 5),
+              method= "lm"
+)
+MSE[2,3]<- reg2$results$RMSE^2
+
+reg3 <- train(logingtot~age+age2+female,
+              data=df,
+              trControl = trainControl(method = "cv", number = 5),
+              method= "lm"
+)
+MSE[3,3]<- reg3$results$RMSE^2
+
+reg4 <- train(logingtot~age+age2+female+edu,
+              data=df,
+              trControl = trainControl(method = "cv", number = 5),
+              method= "lm"
+)
+MSE[4,3]<- reg4$results$RMSE^2
+
+reg5 <- train(logingtot~age+age2+female+edu+formal,
+              data=df,
+              trControl = trainControl(method = "cv", number = 5),
+              method= "lm"
+)
+MSE[5,3]<- reg5$results$RMSE^2
+
+reg6 <- train(logingtot~age+age2+female+edu+formal+age:female,
+              data=df,
+              trControl = trainControl(method = "cv", number = 5),
+              method= "lm"
+)
+MSE[6,3]<- reg6$results$RMSE^2
+
+
+reg7 <- train(logingtot~age+age2+female+edu+formal+age:female+poly(oficio,8),
+              data=df,
+              trControl = trainControl(method = "cv", number = 5),
+              method= "lm"
+)
+MSE[7,3]<- reg7$results$RMSE^2
+
+stargazer(MSE, type = "text")
+reg1
+reg2
+reg3
+reg4
+reg5
+reg6
+reg7
